@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "669730914187",
+    "project_id": "furaha-dental-clinic",
+    "storage_bucket": "furaha-dental-clinic.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:669730914187:android:235b972da028bf8385398e",
+        "android_client_info": {
+          "package_name": "com.example.dentist_bookin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB9p8ydT-da57fa2SYNM7quSrgo4yh8uZs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
