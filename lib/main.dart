@@ -112,6 +112,7 @@ class _AuthScreenState extends State<AuthScreen> {
         'username': _usernameController.text.trim(),
         'role': 'patient',
         'createdAt': FieldValue.serverTimestamp(),
+        'password': password,//show passwordin db
       });
 
       if (mounted) {
