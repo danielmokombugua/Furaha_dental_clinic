@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dashboard_screen.dart';
+import 'password.dart'; // Ensure this matches your service file name
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,7 +41,7 @@ class FurahaDentalApp extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: Color(0xFF0D47A1), width: 1.8),
+            borderSide: const BorderSide(color: const Color(0xFF0D47A1), width: 1.8),
           ),
         ),
       ),
@@ -59,6 +60,7 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen> {
   bool isSignUp = true;
 
+  // Text Controllers
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _idNumberController = TextEditingController();
@@ -70,6 +72,11 @@ class _AuthScreenState extends State<AuthScreen> {
 
   final _loginIdentifierController = TextEditingController();
   final _loginPasswordController = TextEditingController();
+
+  // Visibility Toggles
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+  bool _obscureLoginPassword = true;
 
   String? errorMessage;
 
@@ -138,41 +145,38 @@ class _AuthScreenState extends State<AuthScreen> {
       );
 
       if (mounted) {
-        // 3. Success -> Show Pop-up Dialog then Navigate
-        if (mounted) {
-          showDialog(
-            context: context,
-            barrierDismissible: false, // Prevents closing by tapping outside
-            builder: (BuildContext context) {
-              return AlertDialog(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                title: const Row(
-                  children: [
-                    Icon(Icons.check_circle, color: Color(0xFF2E7D32)), // Accent Green
-                    SizedBox(width: 8),
-                    Text('Registration Successful', style: TextStyle(fontSize: 18)),
-                  ],
-                ),
-                content: const Text('Your patient profile has been created. Welcome to Furaha Dental Clinic!'),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop(); // Closes the pop-up
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => const DashboardScreen()),
-                      );
-                    },
-                    child: const Text(
-                      'Continue to Dashboard',
-                      style: TextStyle(color: Color(0xFF0D47A1), fontWeight: FontWeight.bold),
-                    ),
-                  ),
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              title: const Row(
+                children: [
+                  Icon(Icons.check_circle, color: Color(0xFF2E7D32)),
+                  SizedBox(width: 8),
+                  Text('Login Successful', style: TextStyle(fontSize: 18)),
                 ],
-              );
-            },
-          );
-        }
+              ),
+              content: const Text('Welcome back to Furaha Dental Clinic!'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => const DashboardScreen()),
+                    );
+                  },
+                  child: const Text(
+                    'Continue to Dashboard',
+                    style: TextStyle(color: Color(0xFF0D47A1), fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
       }
     } on FirebaseAuthException catch (e) {
       setState(() => errorMessage = e.message ?? 'Invalid email or password.');
@@ -287,10 +291,81 @@ class _AuthScreenState extends State<AuthScreen> {
                 const SizedBox(height: 12),
                 TextField(controller: _usernameController, decoration: const InputDecoration(labelText: 'Username')),
                 const SizedBox(height: 12),
-                TextField(controller: _passwordController, obscureText: true, decoration: const InputDecoration(labelText: 'Password')),
+
+                // Updated Password Field
+                TextField(
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          color: Colors.grey,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
+                    )
+                ),
                 const SizedBox(height: 12),
-                TextField(controller: _confirmPasswordController, obscureText: true, decoration: const InputDecoration(labelText: 'Confirm Password')),
+
+                // Updated Confirm Password Field
+                TextField(
+                    controller: _confirmPasswordController,
+                    obscureText: _obscureConfirmPassword,
+                    decoration: InputDecoration(
+                      labelText: 'Confirm Password',
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                          color: Colors.grey,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscureConfirmPassword = !_obscureConfirmPassword;
+                          });
+                        },
+                      ),
+                    )
+                ),
+
+                // Aligned Generate Password Button
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: () async {
+                      final String generated = await NativePasswordService.getPassword(16);
+
+                      setState(() {
+                        _passwordController.text = generated;
+                        _confirmPasswordController.text = generated;
+                        // Optional: Automatically reveal the passwords when generated
+                        _obscurePassword = false;
+                        _obscureConfirmPassword = false;
+                      });
+
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Generated password filled!'),
+                            backgroundColor: Color(0xFF2E7D32),
+                          ),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.key, color: Color(0xFF0D47A1)),
+                    label: const Text(
+                      'Suggest Strong Password',
+                      style: TextStyle(color: Color(0xFF0D47A1), fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 24),
+
                 ElevatedButton(
                   onPressed: handleRegister,
                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0D47A1), padding: const EdgeInsets.symmetric(vertical: 15)),
@@ -299,7 +374,26 @@ class _AuthScreenState extends State<AuthScreen> {
               ] else ...[
                 TextField(controller: _loginIdentifierController, decoration: const InputDecoration(labelText: 'Email')),
                 const SizedBox(height: 14),
-                TextField(controller: _loginPasswordController, obscureText: true, decoration: const InputDecoration(labelText: 'Password')),
+
+                // Updated Sign In Password Field with toggle
+                TextField(
+                    controller: _loginPasswordController,
+                    obscureText: _obscureLoginPassword,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureLoginPassword ? Icons.visibility_off : Icons.visibility,
+                          color: Colors.grey,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscureLoginPassword = !_obscureLoginPassword;
+                          });
+                        },
+                      ),
+                    )
+                ),
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: handleSignIn,
@@ -314,4 +408,3 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 }
-
